@@ -24,24 +24,24 @@ Below is an example of how the various methods can come together.
 
 ```ruby
 class Order
-  def refund
+  def refund(cancel_delivery = true)
     Keka.run do
       # returns an err keka with provided msg if !refundable?
       Keka.err_unless!(refundable?, 'Payment is no longer refundable.')
       # returns an err keka with provided msg if !refund!
-      Keka.err_unless!(refund!, 'Refund failed. Please try again')
+      Keka.err_unless!(payment.refund, 'Refund failed. Please try again')
       # execute statements if nothing 'return' from above
       do_something_else
-      # if cancel_delivery?
-      # => returns an err keka with provided msg if !remove_delivery
-      Keka.err_unless!(remove_delivery, 'Refunded but failed to remove delivery.') if cancel_delivery?
+      # if cancel_delivery
+      # => returns an err keka with provided msg if !remove_delivery_assignment
+      Keka.err_unless!(remove_delivery_assignment, 'Refunded but failed to remove delivery.') if cancel_delivery
       # returns an ok keka if nothing 'return' from above
     end
   end
 
   private
 
-  def remove_delivery
+  def remove_delivery_assignment
     Keka.run do
       # returns an ok keka if already_removed?
       Keka.ok_if! already_removed?
