@@ -1,103 +1,93 @@
 RSpec.describe Keka do
-
-  describe 'Keka::Base' do
-    describe '#ok?' do
-      it { expect(described_class::Base.new(true, nil)).to be_ok }
-      it { expect(described_class::Base.new(false, nil)).not_to be_ok }
-    end
-  end
-
-  describe 'Keka::Halt' do
-    describe 'initialization' do
-      it 'is initialized with a Keka::Base' do
-        begin
-          base = described_class::Base.new(true, nil)
-          raise described_class::Halt.new(base)
-        rescue described_class::Halt => e
-          expect(e.keka).to eq(base)
+  describe 'Context::Originable' do
+    describe '.run' do
+      it 'returns ok result when there is no exception' do
+        result = Keka.run do
+          1 + 1
         end
+        expect(result).to be_ok
+      end
+
+      it 'returns error result when there is exception' do
+        result = Keka.run do
+          Keka.err_if! true, 'something went wrong'
+        end
+        expect(result).not_to be_ok
+        expect(result.msg).to eq 'something went wrong'
       end
     end
-  end
 
-  describe '.run' do
-    it 'returns ok keka if nothing halts' do
-      result = described_class.run do
-        1 + 1
+    describe '.rescue_with' do
+      it 'returns ok result when there is no exception' do
+        result = Keka.rescue_with(RuntimeError, 'foo').run { 1+ 1 }
+        expect(result).to be_ok
+        expect(result.msg).to be_nil
       end
-      expect(result).to be_ok
-      expect(result.msg).to be_nil
-    end
 
-    it 'returns the correct keka when halted' do
-      result = described_class.run do
-        described_class.err_if!(true, 'foo')
+      it 'returns error result when expected exception raised' do
+        result = Keka.rescue_with(RuntimeError, 'foo').run { raise 'err!' }
+        expect(result).not_to be_ok
+        expect(result.msg).to eq 'foo'
       end
-      expect(result).not_to be_ok
-      expect(result.msg).to eq 'foo'
-    end
-
-    it 'raises when no block is given' do
-      expect{ described_class.run }.to raise_error('Block required!')
     end
   end
 
   describe '.err_if!' do
-    context 'when evaluating keka object,' do
-      context 'when keka is ok,' do
+    context 'when evaluating result object,' do
+      context 'when result is ok,' do
         it 'halts' do
-          keka = described_class::Base.new(true, nil)
-          expect{ described_class.err_if!(keka) }.to raise_error do |error|
-            expect(error.keka).not_to be_ok
-            expect(error.keka.msg).to be_nil
+          result = described_class::Result.new(true, nil)
+          expect{ described_class.err_if!(result) }.to raise_error do |error|
+            expect(error.result).not_to be_ok
+            expect(error.result.msg).to be_nil
           end
         end
 
         describe 'error message' do
           it 'accepts optional error message' do
-            keka = described_class::Base.new(true, nil)
-            expect{ described_class.err_if!(keka, 'foo') }.to raise_error do |error|
-              expect(error.keka).not_to be_ok
-              expect(error.keka.msg).to eq 'foo'
+            result = described_class::Result.new(true, nil)
+            expect{ described_class.err_if!(result, 'foo') }.to raise_error do |error|
+              expect(error.result).not_to be_ok
+              expect(error.result.msg).to eq 'foo'
             end
           end
 
-          it 'ignores previous keka message' do
-            keka = described_class::Base.new(true, 'bar')
-            expect{ described_class.err_if!(keka) }.to raise_error do |error|
-              expect(error.keka).not_to be_ok
-              expect(error.keka.msg).to be_nil
+          it 'ignores previous result message' do
+            result = described_class::Result.new(true, 'bar')
+            expect{ described_class.err_if!(result) }.to raise_error do |error|
+              expect(error.result).not_to be_ok
+              expect(error.result.msg).to be_nil
             end
           end
         end
       end
 
       it 'does not halt when err' do
-        keka = described_class::Base.new(false, nil)
-        expect{ described_class.err_if!(keka) }.not_to raise_error
+        result = described_class::Result.new(false, nil)
+        expect{ described_class.err_if!(result) }.not_to raise_error
       end
     end
 
     context 'when evaluating other object,' do
       it 'halts if truthy' do
         expect{ described_class.err_if!(true, 'foo') }.to raise_error do |error|
-          expect(error.keka).not_to be_ok
-          expect(error.keka.msg).to eq 'foo'
+          expect(error.result).not_to be_ok
+          expect(error.result.msg).to eq 'foo'
         end
 
         expect{ described_class.err_if!(true) }.to raise_error do |error|
-          expect(error.keka).not_to be_ok
-          expect(error.keka.msg).to be_nil
+          expect(error.result).not_to be_ok
+          expect(error.result.msg).to be_nil
         end
 
         expect{ described_class.err_if!(1) }.to raise_error do |error|
-          expect(error.keka).not_to be_ok
-          expect(error.keka.msg).to be_nil
+          expect(error.result).not_to be_ok
+          expect(error.result.msg).to be_nil
         end
 
         expect{ described_class.err_if!("hello") }.to raise_error do |error|
-          expect(error.keka).not_to be_ok
-          expect(error.keka.msg).to be_nil
+          expect(error.result).not_to be_ok
+          expect(error.result.msg).to be_nil
         end
       end
 
@@ -108,35 +98,35 @@ RSpec.describe Keka do
   end
 
   describe '.err_unless!' do
-    context 'when evaluating keka object,' do
-      it 'does not halt when keka is ok' do
-        keka = described_class::Base.new(true, nil)
-        expect{ described_class.err_unless!(keka) }.not_to raise_error
+    context 'when evaluating result object,' do
+      it 'does not halt when result is ok' do
+        result = described_class::Result.new(true, nil)
+        expect{ described_class.err_unless!(result) }.not_to raise_error
       end
 
-      context 'when keka is err' do
-        it 'halts and reuses the previous keka' do
-          keka = described_class::Base.new(false, nil)
-          expect{ described_class.err_unless!(keka) }.to raise_error do |error|
-            expect(error.keka).to eq keka
-            expect(error.keka.msg).to be_nil
+      context 'when result is err' do
+        it 'halts and reuses the previous result' do
+          result = described_class::Result.new(false, nil)
+          expect{ described_class.err_unless!(result) }.to raise_error do |error|
+            expect(error.result).to eq result
+            expect(error.result.msg).to be_nil
           end
         end
 
         describe 'error message' do
-          it 'uses previous keka msg if msg is not provided in argument' do
-            keka = described_class::Base.new(false, 'foo')
-            expect{ described_class.err_unless!(keka) }.to raise_error do |error|
-              expect(error.keka).to eq keka
-              expect(error.keka.msg).to eq 'foo'
+          it 'uses previous result msg if msg is not provided in argument' do
+            result = described_class::Result.new(false, 'foo')
+            expect{ described_class.err_unless!(result) }.to raise_error do |error|
+              expect(error.result).to eq result
+              expect(error.result.msg).to eq 'foo'
             end
           end
 
-          it 'changes msg of provided keka when new msg is present' do
-            keka = described_class::Base.new(false, 'foo')
-            expect{ described_class.err_unless!(keka, 'bar') }.to raise_error do |error|
-              expect(error.keka).to eq keka
-              expect(keka.msg).to eq 'bar'
+          it 'changes msg of provided result when new msg is present' do
+            result = described_class::Result.new(false, 'foo')
+            expect{ described_class.err_unless!(result, 'bar') }.to raise_error do |error|
+              expect(error.result).to eq result
+              expect(result.msg).to eq 'bar'
             end
           end
         end
@@ -146,12 +136,12 @@ RSpec.describe Keka do
     context 'when evaluating other object,' do
       it 'halts if falsy' do
         expect{ described_class.err_unless!(false) }.to raise_error do |error|
-          expect(error.keka).not_to be_ok
+          expect(error.result).not_to be_ok
         end
 
         expect{ described_class.err_unless!(false, 'foo') }.to raise_error do |error|
-          expect(error.keka).not_to be_ok
-          expect(error.keka.msg).to eq 'foo'
+          expect(error.result).not_to be_ok
+          expect(error.result.msg).to eq 'foo'
         end
       end
 
@@ -164,56 +154,56 @@ RSpec.describe Keka do
   end
 
   describe '.ok_if!' do
-    context 'when evaluating keka object,' do
-      context 'when keka is ok,' do
+    context 'when evaluating result object,' do
+      context 'when result is ok,' do
         it 'halts' do
-          keka = described_class::Base.new(true, nil)
-          expect{ described_class.ok_if!(keka) }.to raise_error do |error|
-            expect(error.keka).to be_ok
-            expect(error.keka.msg).to be_nil
+          result = described_class::Result.new(true, nil)
+          expect{ described_class.ok_if!(result) }.to raise_error do |error|
+            expect(error.result).to be_ok
+            expect(error.result.msg).to be_nil
           end
         end
 
         describe 'error message' do
-          it 'uses previous keka msg if msg is not provided in argument' do
-            keka = described_class::Base.new(true, 'foo')
-            expect{ described_class.ok_if!(keka) }.to raise_error do |error|
-              expect(error.keka).to eq keka
-              expect(error.keka.msg).to eq 'foo'
+          it 'uses previous result msg if msg is not provided in argument' do
+            result = described_class::Result.new(true, 'foo')
+            expect{ described_class.ok_if!(result) }.to raise_error do |error|
+              expect(error.result).to eq result
+              expect(error.result.msg).to eq 'foo'
             end
           end
 
-          it 'changes msg of provided keka when new msg is present' do
-            keka = described_class::Base.new(true, 'foo')
-            expect{ described_class.ok_if!(keka, 'bar') }.to raise_error do |error|
-              expect(error.keka).to eq keka
-              expect(keka.msg).to eq 'bar'
+          it 'changes msg of provided result when new msg is present' do
+            result = described_class::Result.new(true, 'foo')
+            expect{ described_class.ok_if!(result, 'bar') }.to raise_error do |error|
+              expect(error.result).to eq result
+              expect(result.msg).to eq 'bar'
             end
           end
         end
       end
 
-      it 'does not halt when keka is err' do
-        keka = described_class::Base.new(false, nil)
-        expect{ described_class.ok_if!(keka) }.not_to raise_error
+      it 'does not halt when result is err' do
+        result = described_class::Result.new(false, nil)
+        expect{ described_class.ok_if!(result) }.not_to raise_error
       end
     end
 
     context 'when evaluating other object,' do
       it 'halts if truthy' do
         expect{ described_class.ok_if!(true) }.to raise_error do |error|
-          expect(error.keka).to be_ok
-          expect(error.keka.msg).to be_nil
+          expect(error.result).to be_ok
+          expect(error.result.msg).to be_nil
         end
 
         expect{ described_class.ok_if!('foo') }.to raise_error do |error|
-          expect(error.keka).to be_ok
-          expect(error.keka.msg).to be_nil
+          expect(error.result).to be_ok
+          expect(error.result.msg).to be_nil
         end
 
         expect{ described_class.ok_if!(true, 'foo') }.to raise_error do |error|
-          expect(error.keka).to be_ok
-          expect(error.keka.msg).to eq 'foo'
+          expect(error.result).to be_ok
+          expect(error.result.msg).to eq 'foo'
         end
       end
 
@@ -226,17 +216,16 @@ RSpec.describe Keka do
   describe '.ok' do
     it { expect(described_class.ok).to be_ok }
     it 'accepts message' do
-      keka = described_class.ok('foo')
-      expect(keka.msg).to eq 'foo'
+      result = described_class.ok('foo')
+      expect(result.msg).to eq 'foo'
     end
   end
 
   describe '.err' do
     it { expect(described_class.err).not_to be_ok }
     it 'accepts message' do
-      keka = described_class.err('foo')
-      expect(keka.msg).to eq 'foo'
+      result = described_class.err('foo')
+      expect(result.msg).to eq 'foo'
     end
   end
-
 end
