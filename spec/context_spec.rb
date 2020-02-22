@@ -48,6 +48,11 @@ module Keka
         expect(result.msg).to eq 'an error occurred'
       end
 
+      it 'does not rescue exceptions that are not descendants of StandardError' do
+        expect { context.rescue_with(NoMemoryError).run { raise NoMemoryError.new } }
+          .to raise_exception(NoMemoryError)
+      end
+
       it 'raises when no block is given' do
         expect{ context.run }.to raise_error('Block required!')
       end
