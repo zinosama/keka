@@ -4,19 +4,9 @@ Keka (Japanese for 'result') is a wrapper that represents the result of a partic
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
 ```ruby
 gem 'keka'
 ```
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install keka
 
 ## Usage
 
@@ -64,8 +54,46 @@ class SomeController
 end
 ```
 
-Of course, you can also use `.err_unless!`, `err_if!`, and `ok_if!` outside
+Of course, you can also use `.err_unless!`, `.err_if!`, and `.ok_if!` outside
 of the `Keka.run` block.
+
+### Handle Exceptions
+
+Before version 0.2.0, handling exceptions in `.run` block is a bit tricky. You might do something like this
+
+```ruby
+def validate_purchase(item_ids)
+  Keka.run do
+    Item.find(item_ids)
+  rescue ActiveRecord::RecordNotFound
+    Keka.err_if! true, 'Some item is unavailable'
+  end
+end
+```
+
+After version 0.2.0, you can simply
+```ruby
+# * Returns ok result if no exception is raised.
+# * Returns err result if ActiveRecord::RecordNotFound is raised, with msg set
+#   to 'Some item is unavailable'.
+# * Raises if any other non-keka exception is thrown.
+def validate_purchase(item_ids)
+  Keka.rescue_with(ActiveRecord::RecordNotFound, 'Some item is unavailable')
+    .run { Item.find(item_ids) }
+end
+```
+
+You can also chain `.rescue_with`
+```ruby
+def validate_purchase(store_id, new_item_payload)
+  Keka.rescue_with(ActiveRecord::RecordNotFound, 'Some item is unavailable')
+    .rescue_with(ActiveRecord::RecordInvalid, 'Invalid payload')
+    .run do
+      store = Store.find(store_id)
+      store.items.create!(new_item_payload)
+    end
+end
+```
 
 ## Development
 
