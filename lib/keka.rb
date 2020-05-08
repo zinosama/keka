@@ -8,7 +8,7 @@ module Keka
     include Context::Originable
 
     def err_if!(evaluator, msg = nil)
-      raise Halt.new(err(msg)) if (evaluator.respond_to?(:ok?) ? evaluator.ok? : evaluator)
+      raise Halt.new(err_result(msg)) if (evaluator.respond_to?(:ok?) ? evaluator.ok? : evaluator)
     end
 
     def err_unless!(evaluator, msg = nil)
@@ -17,7 +17,7 @@ module Keka
         evaluator.msg = msg if msg
         raise Halt.new(evaluator)
       else
-        raise Halt.new(err(msg)) unless evaluator
+        raise Halt.new(err_result(msg)) unless evaluator
       end
     end
 
@@ -27,25 +27,25 @@ module Keka
         evaluator.msg = msg if msg
         raise Halt.new(evaluator)
       else
-        raise Halt.new(ok(msg)) if evaluator
+        raise Halt.new(ok_result(msg)) if evaluator
       end
     end
 
     def err!(msg = nil)
-      raise Halt.new(err(msg))
+      raise Halt.new(err_result(msg))
     end
 
     def ok!(msg = nil)
-      raise Halt.new(ok(msg))
+      raise Halt.new(ok_result(msg))
     end
 
     # private (maybe)
-    def ok(msg = nil)
+    def ok_result(msg = nil)
       Result.new(true, msg)
     end
 
     # private (maybe)
-    def err(msg = nil)
+    def err_result(msg = nil)
       Result.new(false, msg)
     end
   end

@@ -28,12 +28,12 @@ module Keka
     def run
       raise 'Block required!' unless block_given?
       yield
-      Keka.ok
+      Keka.ok_result
     rescue Keka::Halt => e
       e.result
     rescue StandardError => e
       raise unless matched = opts[:rescue_exceptions].detect { |setting| e.is_a?(setting[:klass]) }
-      Keka.err(matched[:msg])
+      Keka.err_result(matched[:msg])
     end
 
     private

@@ -245,18 +245,18 @@ RSpec.describe Keka do
     end
   end
 
-  describe '.ok' do
-    it { expect(described_class.ok).to be_ok }
+  describe '.ok_result' do
+    it { expect(described_class.ok_result).to be_ok }
     it 'accepts message' do
-      result = described_class.ok('foo')
+      result = described_class.ok_result('foo')
       expect(result.msg).to eq 'foo'
     end
   end
 
-  describe '.err' do
-    it { expect(described_class.err).not_to be_ok }
+  describe '.err_result' do
+    it { expect(described_class.err_result).not_to be_ok }
     it 'accepts message' do
-      result = described_class.err('foo')
+      result = described_class.err_result('foo')
       expect(result.msg).to eq 'foo'
     end
   end
