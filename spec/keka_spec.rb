@@ -213,6 +213,38 @@ RSpec.describe Keka do
     end
   end
 
+  describe '.err!' do
+    it 'halts without msg' do
+      expect { described_class.err! }.to raise_error do |error|
+        expect(error.result).not_to be_ok
+        expect(error.result.msg).to be_nil
+      end
+    end
+
+    it 'halts with msg' do
+      expect { described_class.err!('foo') }.to raise_error do |error|
+        expect(error.result).not_to be_ok
+        expect(error.result.msg).to eq('foo')
+      end
+    end
+  end
+
+  describe '.ok!' do
+    it 'halts without msg' do
+      expect { described_class.ok! }.to raise_error do |error|
+        expect(error.result).to be_ok
+        expect(error.result.msg).to be_nil
+      end
+    end
+
+    it 'halts with msg' do
+      expect { described_class.ok!('foo') }.to raise_error do |error|
+        expect(error.result).to be_ok
+        expect(error.result.msg).to eq('foo')
+      end
+    end
+  end
+
   describe '.ok' do
     it { expect(described_class.ok).to be_ok }
     it 'accepts message' do

@@ -57,6 +57,22 @@ end
 Of course, you can also use `.err_unless!`, `.err_if!`, and `.ok_if!` outside
 of the `Keka.run` block.
 
+### Abort Unconditionally
+
+Sometimes you know you want to abort, but you also need to a few things before aborting, such as saving the error result to database, logging, or submitting a metric to your monitoring service. You can use `.err!` or `.ok!` methods to abort from the current `Keka.run` block. Both methods can be invoked with or without a message argument.
+
+```ruby
+def refund
+  Keka.run do
+    processor_response = payment.refund
+    unless processor_response.success
+      payment.log_processor_errors(processor_response.errors)
+      Keka.err! processor_response.errors
+    end
+  end
+end
+```
+
 ### Handle Exceptions
 
 Before version 0.2.0, handling exceptions in `.run` block is a bit tricky. You might do something like this

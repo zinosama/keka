@@ -31,6 +31,14 @@ module Keka
       end
     end
 
+    def err!(msg = nil)
+      raise Halt.new(err(msg))
+    end
+
+    def ok!(msg = nil)
+      raise Halt.new(ok(msg))
+    end
+
     # private (maybe)
     def ok(msg = nil)
       Result.new(true, msg)
