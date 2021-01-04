@@ -120,6 +120,41 @@ def invalid_example
 end
 ```
 
+### ActiveRecord (ActiveModel) support
+
+One of the most common boundary conditions is validation.
+
+```ruby
+class User
+  validates :name, :city, presence: true
+end
+
+if User.new(name: nil, city: nil).valid?
+  # do something
+else
+  # return errors
+end
+```
+
+Keka supports `ActiveModel::Errors` as `msg` argument to return full message and errors per fields
+
+```ruby
+user = User.new(name: nil, city: nil)
+
+result = Keka.run do
+  Keka.err_unless! user.valid?, user.errors
+end
+
+puts result.ok?
+# => false
+
+puts result.msg
+# => "Name can't be blank, City can't be blank"
+
+puts result.errors
+# => {name: ["can't be blank"], city: ["can't be blank"]}
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
