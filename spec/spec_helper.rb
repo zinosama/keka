@@ -1,6 +1,7 @@
 require "bundler/setup"
 require "keka"
-require 'pry'
+require "pry"
+require "active_model"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
