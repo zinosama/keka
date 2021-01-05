@@ -14,6 +14,7 @@ RSpec.describe Keka do
         end
         expect(result).not_to be_ok
         expect(result.msg).to eq 'something went wrong'
+        expect(result.errors).to eq(base: ['something went wrong'])
       end
     end
 
@@ -28,6 +29,28 @@ RSpec.describe Keka do
         result = Keka.rescue_with(RuntimeError, 'foo').run { raise 'err!' }
         expect(result).not_to be_ok
         expect(result.msg).to eq 'foo'
+      end
+    end
+
+    describe 'active model support' do
+      class Foo
+        include ActiveModel::Model
+
+        attr_accessor :name, :city
+
+        validates :name, :city, presence: true
+      end
+
+      it 'returns error msg when active model errors are passed' do
+        obj = Foo.new(name: nil)
+
+        result = Keka.run do
+          Keka.err_unless! obj.valid?, obj.errors
+        end
+
+        expect(result).not_to be_ok
+        expect(result.msg).to eq "Name can't be blank, City can't be blank"
+        expect(result.errors).to eq(name: ["can't be blank"], city: ["can't be blank"])
       end
     end
   end
