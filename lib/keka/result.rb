@@ -1,27 +1,29 @@
 module Keka
   class Result
-    attr_writer :msg
-
-    def initialize(is_success, msg)
+    def initialize(is_success, msg_or_errors)
       @is_success = is_success
-      @msg = msg
+      @msg_or_errors = msg_or_errors
     end
 
     def ok?
       is_success
     end
 
-    def msg
-      return @msg if @msg.is_a?(String)
-      return @msg.full_messages.join(', ') if active_model_error?
+    def msg=(msg_or_errors)
+      @msg_or_errors = msg_or_errors
+    end
 
-      @msg
+    def msg
+      return @msg_or_errors if @msg_or_errors.is_a?(String)
+      return @msg_or_errors.full_messages.join(', ') if active_model_error?
+
+      @msg_or_errors
     end
 
     def errors
       return {} if ok?
-      return {base: [@msg]} if @msg.is_a?(String)
-      return @msg.messages if active_model_error?
+      return {base: [@msg_or_errors]} if @msg_or_errors.is_a?(String)
+      return @msg_or_errors.messages if active_model_error?
 
       {}
     end
@@ -31,7 +33,7 @@ module Keka
 
     def active_model_error?
       Object.const_defined?("ActiveModel") &&
-        @msg.is_a?(ActiveModel::Errors)
+        @msg_or_errors.is_a?(ActiveModel::Errors)
     end
   end
 end
