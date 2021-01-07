@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## Version 0.4.0
+* Support ActiveModel::Errors as argument to error message.
+
 ## Version 0.3.0
 * Support `.err!` and `.ok!` public methods.
 * Rename `.ok` to `.ok_result`. [Breaking]
