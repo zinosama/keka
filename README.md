@@ -18,8 +18,8 @@ class Order
     Keka.run do
       # returns an err keka with provided msg if !refundable?
       Keka.err_unless!(refundable?, 'Payment is no longer refundable.')
-      # returns an err keka with provided msg if !refund!
-      Keka.err_unless!(payment.refund, 'Refund failed. Please try again')
+      # returns an err keka with value from provided block if refund does not exist
+      Keka.err_unless!(payment.refund) { CustomErrorClass.new(message: 'Already been refunded') }
       # execute statements if nothing 'return' from above
       do_something_else
       # if cancel_delivery
@@ -42,6 +42,13 @@ class Order
   end
 end
 
+class CustomErrorClass
+  def initialize(message:)
+    @message = message
+    Airbrake.notify('Received refund request for already refunded method')
+  end
+end
+
 class SomeController
   def some_action
     keka = @order.refund
@@ -56,6 +63,18 @@ end
 
 Of course, you can also use `.err_unless!`, `.err_if!`, and `.ok_if!` outside
 of the `Keka.run` block.
+
+### Passing a block
+You can also pass a block to be executed if the result short circuits the execution. This is very useful for when you want to return a more complex `msg` than a String. For example, if you want to return an error class that validates certain properties upon initialization, then you will want to create the instance of error class in the block.
+
+NOTE: This block will only run if there is no `msg` provided.
+
+```
+Keka.err_if!(true)         { raise Error } # Raises error
+Keka.err_if!(false)        { raise Error } # Does not raises error
+Keka.err_if!(true, 'msg')  { raise Error } # Does not raises error
+Keka.err_if!(false, 'msg') { raise Error } # Does not raises error
+```
 
 ### Abort Unconditionally
 
