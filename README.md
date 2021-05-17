@@ -65,6 +65,7 @@ Of course, you can also use `.err_unless!`, `.err_if!`, and `.ok_if!` outside
 of the `Keka.run` block.
 
 ### Passing a block
+
 You can also pass a block to be executed if the result short circuits the execution. This is very useful for when you want to return a more complex `msg` than a String. For example, if you want to return an error class that validates certain properties upon initialization, then you will want to create the instance of error class in the block.
 
 NOTE: This block will only run if there is no `msg` provided.
