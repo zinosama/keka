@@ -9,14 +9,13 @@ module Keka
       is_success
     end
 
-    def msg=(msg_or_errors, &block)
+    def msg=(msg_or_errors)
       @msg_or_errors = msg_or_errors
     end
 
     def msg
       return @msg_or_errors if @msg_or_errors.is_a?(String)
       return @msg_or_errors.full_messages.join(', ') if active_model_error?
-      return yield @msg_or_errors if block_given? && is_success
 
       @msg_or_errors
     end
@@ -25,7 +24,6 @@ module Keka
       return {} if ok?
       return {base: [@msg_or_errors]} if @msg_or_errors.is_a?(String)
       return @msg_or_errors.messages if active_model_error?
-      return yield @msg_or_errors if block_given? && is_success
 
       {}
     end
