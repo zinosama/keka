@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## Version 0.5.0
+* Supports a block parameter for `Keka.err_if!` and `Keka.err_unless!`.
+
 ## Version 0.4.0
 * Support ActiveModel::Errors as argument to error message.
 
