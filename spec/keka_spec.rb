@@ -57,12 +57,19 @@ RSpec.describe Keka do
 
   describe '.err_if!' do
     context 'when evaluating result object,' do
-      context 'when result is ok,' do
+      context 'when result is true,' do
         it 'halts' do
           result = described_class::Result.new(true, nil)
           expect{ described_class.err_if!(result) }.to raise_error do |error|
             expect(error.result).not_to be_ok
             expect(error.result.msg).to be_nil
+          end
+        end
+
+        context 'no error message' do
+          it 'accepts and runs a block' do
+            result = described_class::Result.new(true , nil)
+            expect{ described_class.err_if!(result) { raise 'foobar' } }.to raise_error('foobar')
           end
         end
 
@@ -82,12 +89,24 @@ RSpec.describe Keka do
               expect(error.result.msg).to be_nil
             end
           end
+
+          it 'ignores block if a message is provided' do
+            result = described_class::Result.new(true , nil)
+            expect{ described_class.err_if!(result, 'msg') { raise 'foobar' } }.not_to raise_error('foobar')
+          end
         end
       end
 
-      it 'does not halt when err' do
-        result = described_class::Result.new(false, nil)
-        expect{ described_class.err_if!(result) }.not_to raise_error
+      context 'when result is false,' do
+        it 'does not halt' do
+          result = described_class::Result.new(false, nil)
+          expect{ described_class.err_if!(result) }.not_to raise_error
+        end
+
+        it 'accepts but does not run a block' do
+          result = described_class::Result.new(false , nil)
+          expect{ described_class.err_if!(result) { raise 'foobar' } }.not_to raise_error('foobar')
+        end
       end
     end
 
@@ -122,9 +141,16 @@ RSpec.describe Keka do
 
   describe '.err_unless!' do
     context 'when evaluating result object,' do
-      it 'does not halt when result is ok' do
-        result = described_class::Result.new(true, nil)
-        expect{ described_class.err_unless!(result) }.not_to raise_error
+      context 'when result is ok,' do
+        it 'does not halt' do
+          result = described_class::Result.new(true, nil)
+          expect{ described_class.err_unless!(result) }.not_to raise_error
+        end
+
+        it 'accepts but does not run a block' do
+          result = described_class::Result.new(true , nil)
+          expect{ described_class.err_unless!(result) { raise 'foobar' } }.not_to raise_error('foobar')
+        end
       end
 
       context 'when result is err' do
@@ -133,6 +159,13 @@ RSpec.describe Keka do
           expect{ described_class.err_unless!(result) }.to raise_error do |error|
             expect(error.result).to eq result
             expect(error.result.msg).to be_nil
+          end
+        end
+
+        context 'no error message' do
+          it 'accepts and runs a block' do
+            result = described_class::Result.new(false , nil)
+            expect{ described_class.err_unless!(result) { raise 'foobar' } }.to raise_error('foobar')
           end
         end
 
@@ -151,6 +184,11 @@ RSpec.describe Keka do
               expect(error.result).to eq result
               expect(result.msg).to eq 'bar'
             end
+          end
+
+          it 'ignores block if a message is provided' do
+            result = described_class::Result.new(false , nil)
+            expect{ described_class.err_unless!(result, 'msg') { raise 'foobar' } }.not_to raise_error('foobar')
           end
         end
       end
